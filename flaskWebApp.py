@@ -22,6 +22,9 @@ from ultralytics import YOLO
 
 app = Flask(__name__)
 
+@app.route("/")
+def start():
+    return render_template('index.html')
 
 @app.route("/",methods=['GET','POST'])
 def predict_img():
@@ -47,7 +50,7 @@ def predict_img():
                 #Perfome the detection
                 yolo = YOLO('yolov8n.pt')
                 detections = yolo.predict(image,save=True)
-                return jsonify({"Message" : "Image predicted and saved successfully"})
+                return display(f.filename)
             elif file_extension == 'mp4':
                 video_path = filepath
                 cap = cv.VideoCapture(video_path)
@@ -101,7 +104,25 @@ def predict_img():
     # image_path = folder_path + '/' + latest_subfolders + '/' + f.filename                
                     
                     
-            
+def display(filename):
+    folder_path = 'runs/detect'
+    subfolders = [f for f in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, f))]
+    latest_subfolders = max(subfolders, key=lambda x: os.path.getctime(os.path.join(folder_path, x)))
+    
+    directory = folder_path + '/' + latest_subfolders
+    print("Printing Directory : ",directory)
+    
+    files = os.listdir(directory)
+    latest_files = files[0]
+    
+    print(latest_files)
+    
+    filename = os.path.join(folder_path,latest_subfolders,latest_files)
+    file_extension = filename.rsplit('.',1)[1].lower()
+    
+    environ = request.environ
+    if file_extension == 'jpg':
+        return send_from_directory(directory,latest_files,environ)
             
 if __name__ == '__main__':
     app.run(debug=True)
