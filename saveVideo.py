@@ -43,13 +43,16 @@ def process_video():
             # Initialize YOLO object detector
             yolo = YOLO('yolov8n.pt')
 
+            # Initialize output data list
+            output_data = []
+            
             # Get frames per second (fps) of the video
             fps = cap.get(cv2.CAP_PROP_FPS)
             frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
             # Define the codec and create a VideoWriter object to save the processed video
-            out = cv2.VideoWriter(os.path.join(basepath, 'Detected_Videos', 'output.avi'),
+            out = cv2.VideoWriter(os.path.join(basepath, 'detected_Videos', 'output.avi'),
                                   cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), fps,
                                   (frame_width, frame_height))
 
@@ -69,13 +72,22 @@ def process_video():
                 confidences = detections.boxes.conf.tolist()
                 class_ids = detections.boxes.cls.tolist()
 
+                # Prepare output data for the frame
+                frame_data = []
                 # Draw bounding boxes, labels, and confidence scores on the frame
                 for i in range(len(boxes)):
                     box = boxes[i]
                     confidence = confidences[i]
                     class_id = int(class_ids[i])
                     label = yolo.names[class_id] if class_id < len(yolo.names) else "Unknown"
-
+                    
+                     # Add bounding box, confidence score, and class name to frame data
+                    frame_data.append({
+                        'box': box,
+                        'confidence': confidence,
+                        'class_name': label
+                    })
+                    
                     # Draw bounding box
                     x, y, w, h = map(int, box)
                     color = (0, 255, 0)  # Green color for the bounding box
@@ -86,8 +98,11 @@ def process_video():
                     cv2.putText(frame, label_text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
 
                 # Save annotated frame as an image
-                frame_filename = os.path.join(basepath, 'Detected_Frames', f'frame_{int(cap.get(1))}.jpg')
+                frame_filename = os.path.join(basepath, 'detected_video_frames', f'frame_{int(cap.get(1))}.jpg')
                 cv2.imwrite(frame_filename, frame)
+                
+                #Add frame data to output datalist
+                output_data.append(frame_data)
 
                 # Write the frame to the output video
                 out.write(frame)
@@ -98,8 +113,7 @@ def process_video():
 
             # Prepare the response JSON
             response_data = {
-                'message': 'Video processed successfully',
-                'output_video_path': os.path.join(basepath, 'Detected_Videos', 'output.avi')
+                'frames': output_data
             }
 
             return jsonify(response_data)
