@@ -34,7 +34,7 @@ def predict_img():
             f.save(filepath)
             global imgpath
             predict_img.imgpath = f.filename
-            print( "Printing Predicted Image ::::: ", predict_img)
+            # print( "Printing Predicted Image ::::: ", predict_img)
             
             file_extension = f.filename.rsplit('.',1)[1].lower()
             
@@ -46,7 +46,9 @@ def predict_img():
                 
                 #Perfome the detection
                 yolo = YOLO('yolov8n.pt')
-                detections = yolo.predict(image,save=True)
+                # detections = yolo.predict(image,save=True)
+                detections = yolo.predict(image)
+                print("The detected result is : ", detections)
                 return jsonify({"Message" : "Image predicted and saved successfully"})
             elif file_extension == 'mp4':
                 video_path = filepath
@@ -70,7 +72,7 @@ def predict_img():
                     
                     #Do yolo detection on the frame here
                     results = model(frame,save=True)
-                    print(results)
+                    print("The result is : ",results)
                     cv.waitKey(1)
                     
                     res_plotted = results[0].plot()
@@ -80,17 +82,17 @@ def predict_img():
                     if cv.waitKey(1) == ord('q'):
                         break
                     
-                    # for result in results:
-                    #     # class_id, confidence , bbox = result
-                    #     boxes = result.boxes
-                    #     probs = result.probs
-                    #     cls = boxes.cls
+                    for result in results:
+                        # class_id, confidence , bbox = result
+                        boxes = result.boxes
+                        probs = result.probs
+                        cls = boxes.cls
                         
-                    #     xyxy = boxes.xyxy
-                    #     xywh = boxes.xywh
-                    #     conf = boxes.conf
+                        xyxy = boxes.xyxy
+                        xywh = boxes.xywh
+                        conf = boxes.conf
                         
-                    #     print(boxes,probs,cls,xyxy,xywh,conf)
+                        print(boxes,probs,cls,xyxy,xywh,conf)
                 return jsonify({"Message" : "Video detected and saved successfully"})
                     
     # folder_path = 'runs/detect'
